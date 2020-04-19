@@ -1,0 +1,120 @@
+version: '3'
+services:
+
+  #PHP Service
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: digitalocean.com/php
+    container_name: php
+    restart: always
+    tty: true
+    environment:
+      SERVICE_NAME: ${PHP_SERVICE_NAME}
+      SERVICE_TAGS: ${PHP_SERVICE_TAGS}
+    working_dir: /var/www
+    volumes:
+      - ./src/:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  #Git Service
+  git:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: git
+    restart: always
+    volumes:
+      - ./src:/var/www/
+    working_dir: /var/www
+    entrypoint: ['git']
+    networks:
+      - app-network
+
+  #Composer service
+  composer:
+    image: composer:latest
+    container_name: composer
+    restart: always
+    volumes:
+      - ./src:/var/www
+    working_dir: /var/www
+    depends_on:
+      - php
+    networks:
+      - app-network
+
+  #Artisan Service
+  artisan:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: artisan
+    restart: always
+    volumes:
+      - ./src:/var/www/
+    depends_on:
+      - db
+    working_dir: /var/www
+    entrypoint: ['php', '/var/www/artisan']
+    networks:
+      - app-network
+
+  #Nginx Service
+  webserver:
+    image: nginx:stable-alpine
+    container_name: webserver
+    restart: always
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./src/:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - app-network
+
+  #Node Service
+  npm:
+    image: node:13.7
+    container_name: npm
+    volumes:
+      - ./src:/var/www/
+    working_dir: /var/www
+    entrypoint: ['npm']
+    networks:
+      - app-network
+
+  #MySQL Service
+  db:
+    image: mysql:5.7.22
+    container_name: db
+    restart: always
+    tty: true
+    ports:
+      - "33061:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SERVICE_TAGS: ${MYSQL_SERVICE_TAGS}
+      SERVICE_NAME: ${MYSQL_SERVICE_NAME}
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+#Volumes
+volumes:
+  dbdata:
+    driver: local
