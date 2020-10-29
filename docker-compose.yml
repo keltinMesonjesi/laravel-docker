@@ -1,6 +1,24 @@
 version: '3'
 services:
 
+  #Nginx Service
+  webserver:
+    image: nginx:stable-alpine
+    container_name: webserver
+    restart: always
+    tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./src/:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    depends_on:
+      - php
+      - mysql
+    networks:
+      - app-network
+
   #PHP Service
   php:
     build:
@@ -17,20 +35,6 @@ services:
     volumes:
       - ./src/:/var/www
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
-    networks:
-      - app-network
-
-  #Git Service
-  git:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: git
-    restart: always
-    volumes:
-      - ./src:/var/www/
-    working_dir: /var/www
-    entrypoint: ['git']
     networks:
       - app-network
 
@@ -61,21 +65,6 @@ services:
       - db
     working_dir: /var/www
     entrypoint: ['php', '/var/www/artisan']
-    networks:
-      - app-network
-
-  #Nginx Service
-  webserver:
-    image: nginx:stable-alpine
-    container_name: webserver
-    restart: always
-    tty: true
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./src/:/var/www
-      - ./nginx/conf.d/:/etc/nginx/conf.d/
     networks:
       - app-network
 
