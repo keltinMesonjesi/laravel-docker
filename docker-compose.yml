@@ -46,6 +46,7 @@ services:
       - php
     networks:
       - app-network
+    entrypoint: ['composer', '--ignore-platform-reqs']
 
   #Artisan Service
   artisan:
