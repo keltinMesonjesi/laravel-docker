@@ -15,7 +15,7 @@ services:
       - ./nginx/conf.d/:/etc/nginx/conf.d/
     depends_on:
       - php
-      - mysql
+      - db
     networks:
       - app-network
 
