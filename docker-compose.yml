@@ -3,13 +3,12 @@ services:
 
   #Nginx Service
   webserver:
-    image: nginx:stable-alpine
+    image: nginx:1.20-alpine
     container_name: webserver
     restart: always
     tty: true
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./src/:/var/www
       - ./nginx/conf.d/:/etc/nginx/conf.d/
@@ -40,7 +39,7 @@ services:
 
   #Composer service
   composer:
-    image: composer:latest
+    image: composer:2.2
     container_name: composer
     restart: always
     volumes:
@@ -50,7 +49,7 @@ services:
       - php
     networks:
       - app-network
-    entrypoint: ['composer', '--ignore-platform-reqs']
+    entrypoint: ['composer']
 
   #Artisan Service
   artisan:
