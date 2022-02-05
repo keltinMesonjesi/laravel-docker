@@ -1,23 +1,6 @@
 version: '3'
 services:
 
-  #Nginx Service
-  webserver:
-    image: nginx:1.20-alpine
-    container_name: webserver
-    restart: always
-    tty: true
-    ports:
-      - "80:80"
-    volumes:
-      - ./src/:/var/www
-      - ./nginx/conf.d/:/etc/nginx/conf.d/
-    depends_on:
-      - php
-      - db
-    networks:
-      - app-network
-
   #PHP Service
   php:
     build:
@@ -34,6 +17,20 @@ services:
     volumes:
       - ./src/:/var/www
       - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  #Git Service
+  git:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: git
+    restart: always
+    volumes:
+      - ./src:/var/www/
+    working_dir: /var/www
+    entrypoint: ['git']
     networks:
       - app-network
 
@@ -65,6 +62,23 @@ services:
     working_dir: /var/www
     entrypoint: ['php', '/var/www/artisan']
     networks:
+      - app-network
+
+  #Nginx Service
+  webserver:
+    image: nginx:1.20-alpine
+    container_name: webserver
+    restart: always
+    tty: true
+    environment:
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    volumes:
+      - ./src/:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - webproxy
       - app-network
 
   #Node Service
@@ -101,6 +115,9 @@ services:
 
 #Docker Networks
 networks:
+  webproxy:
+    external:
+      name: webproxy
   app-network:
     driver: bridge
 #Volumes

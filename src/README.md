@@ -1,2 +1,1 @@
-# Laravel application
-Your laravel application goes in this folder
+Repository of Bujqesi.al API
